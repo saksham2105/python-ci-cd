@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Dashboard</title>
+    <style>
+        #loading-spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #4caf50;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f3f3;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 24px;
+            width: 100%;
+        }
+
+        nav {
+            background-color: #4caf50;
+            overflow: hidden;
+        }
+
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 160px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            margin-top: 160px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin: 5px 0 20px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #logs {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-y: auto;
+            background-color: black;
+            color: white;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <header>CI/CD Dashboard</header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+    </nav>
+
+    <div class="container">
+        <label for="repoUrl">Repository URL:</label>
+        <input type="text" id="repoUrl" value="https://github.com/saksham2105/doc-pi.git">
+
+        <label for="repoPath">Repository Path:</label>
+        <input type="text" id="repoPath" value="repo">
+
+        <label for="branch">Branch:</label>
+        <input type="text" id="branch" value="master">
+
+        <label for="username">Username:</label>
+        <input type="text" id="username" value="">
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" value="">
+
+        <label for="project">Project Name:</label>
+        <input type="text" id="project" value="my-app">
+
+        <button onclick="buildAndDeploy()">Build and Deploy</button>
+        <div id="loading-spinner"></div>
+        <textarea id="logs" readonly></textarea>
+    </div>
+
+    <script>
+        const logsContainer = document.getElementById('logs');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/logs');
+                const result = await response.json();
+
+                if (result.isCommandProcessed) {
+                    loadingSpinner.style.display = 'none';
+                }
+                logsContainer.innerText = result.logs;
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+            }
+        }
+
+        // Periodically update logs every 2 seconds
+        setInterval(fetchLogs, 2000);
+
+        // Initial fetch
+        fetchLogs();
+
+        async function buildAndDeploy() {
+            const repoUrl = document.getElementById('repoUrl').value;
+            const repoPath = document.getElementById('repoPath').value;
+            const branch = document.getElementById('branch').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const project = document.getElementById('project').value;
+
+            // Show loading spinner while processing
+            loadingSpinner.style.display = 'inline-block';
+
+            const response = await fetch('/build-and-deploy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    repo_url: repoUrl,
+                    repo_path: repoPath,
+                    branch: branch,
+                    username: username,
+                    password: password,
+                    project: project
+                })
+            });
+
+            const result = await response.json();
+
+            // Hide loading spinner after processing
+            loadingSpinner.style.display = 'none';
+
+            logsContainer.value = result.logs;
+        }
+    </script>
+</body>
+</html>
